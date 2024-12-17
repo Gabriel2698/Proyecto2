@@ -1,0 +1,185 @@
+﻿@page "/weather"
+
+@using Microsoft.EntityFrameworkCore;
+@using Proyecto2.Models
+@using Proyecto2.Server.Data
+@inject ApplicationDbContext _context
+
+<PageTitle>Administrador</PageTitle>
+
+<h2>Administrador</h2>
+
+
+
+
+
+
+<p>This component demonstrates showing data.</p>
+
+@if (forecasts == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Contraseña</th>
+                <th>Editar</th>
+                <th>Eliminar</th>
+
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in TodosAdminis)
+            {
+                <tr>
+                    <td>@p.Nombre</td>
+                    <td>@p.Contraseña</td>
+                    <td>
+						<button @onclick="()=>Asignar(p)" class="btn bg-primary">Editar</button>
+                    </td>
+                    <td>
+                       
+						<button @onclick="()=>Eliminar(p)" class="btn bg-warning">Eliminar</button>
+
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<label>Nombre</label>
+
+
+<input type="text" @bind-value=nuevo.Nombre class="form-control" />
+
+<label>Contraseña</label>
+
+<input type="text" @bind-value=nuevo.Contraseña class="form-control" />
+
+<button @onclick=Guardar class="btn-outline-success">Guardar</button>
+<button @onclick=Actualizar class="btn-outline-success">Actualizar</button>
+
+<br />
+<p>@mensaje</p>
+
+
+
+
+
+@code {
+
+
+
+
+
+    Admin nuevo = new Admin();
+    public static List<Admin> TodosAdminis = new List<Admin>();
+ 
+
+
+
+
+    string mensaje = "";
+    async Task Guardar()
+    {
+
+
+        _context.Adminis.Add(nuevo);
+        await _context.SaveChangesAsync();
+        await Consultar();
+        mensaje = "Guardado con exito";
+
+
+
+    }
+
+
+    async Task Consultar()
+    {
+        var listado = _context.Adminis.ToList();
+        TodosAdminis=listado;
+
+
+    }
+
+
+    void Asignar(Admin miADMIN)
+    {
+        nuevo = miADMIN;
+    }
+
+
+
+
+    async Task Actualizar()
+    {
+        var DbObjeto = await _context.Adminis.FindAsync(nuevo.Id);
+        if (DbObjeto == null)
+            mensaje = "No se encuentra";
+        DbObjeto.Nombre = nuevo.Nombre;
+        DbObjeto.Contraseña = nuevo.Contraseña;
+        await _context.SaveChangesAsync();
+        mensaje = "Actualizado correctamente";
+
+    }
+    async Task Eliminar(Admin nuevoObj)
+    {
+        _context.Adminis.Remove(nuevoObj);
+        await _context.SaveChangesAsync();
+        mensaje = "Eliminado con exito";
+        await Consultar();
+    }
+
+
+
+
+
+    private WeatherForecast[]? forecasts;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        await Consultar();
+
+
+        // Simulate asynchronous loading to demonstrate a loading indicator
+        await Task.Delay(500);
+
+        var startDate = DateOnly.FromDateTime(DateTime.Now);
+        var summaries = new[] { "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching" };
+        forecasts = Enumerable.Range(1, 5).Select(index => new WeatherForecast
+        {
+            Date = startDate.AddDays(index),
+            TemperatureC = Random.Shared.Next(-20, 55),
+            Summary = summaries[Random.Shared.Next(summaries.Length)]
+        }).ToArray();
+    }
+
+    private class WeatherForecast
+    {
+        public DateOnly Date { get; set; }
+        public int TemperatureC { get; set; }
+        public string? Summary { get; set; }
+        public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    }
+}
