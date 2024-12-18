@@ -1,0 +1,113 @@
+﻿@page "/Inventarios"
+@using Proyecto2.Services
+@using Microsoft.EntityFrameworkCore;
+@using Proyecto2.Models
+@using Proyecto2.Server.Data
+@inject ApplicationDbContext _context
+
+
+<h3>Gestión de Inventario de Máquinas</h3>
+
+<!-- Formulario para agregar inventario -->
+<EditForm Model="nuevoInventario" OnValidSubmit="AgregarInventario">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label>Nombre de la Máquina:</label>
+        <InputText @bind-Value="nuevoInventario.NombreMaquina" class="form-control" />
+    </div>
+
+    <div>
+        <label>Vida Útil:</label>
+        <InputText @bind-Value="nuevoInventario.VidaUtil" class="form-control" />
+    </div>
+
+    <div>
+        <label>Fecha de Compra:</label>
+        <InputDate @bind-Value="nuevoInventario.FechaCompra" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-2">Agregar Máquina</button>
+</EditForm>
+
+<!-- Tabla para mostrar inventario -->
+<h4 class="mt-4">Lista de Máquinas</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre de la Máquina</th>
+            <th>Vida Útil</th>
+            <th>Fecha de Compra</th>
+            <th>Acción</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var inventario in listaInventarios)
+        {
+            <tr>
+                <td>@inventario.Id</td>
+                <td>@inventario.NombreMaquina</td>
+                <td>@inventario.VidaUtil</td>
+                <td>@inventario.FechaCompra.ToShortDateString()</td>
+                <td>
+                    <button class="btn btn-danger" @onclick="() => EliminarInventario(inventario.Id)">Eliminar</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+
+
+    private Inventario nuevoInventario = new Inventario();
+    private List<Inventario> listaInventarios = new List<Inventario>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarInventarios();
+    }
+
+    private async Task CargarInventarios()
+    {
+        listaInventarios = await _context.Inventarios.ToListAsync();
+    }
+
+    private async Task AgregarInventario()
+    {
+        try
+        {
+            _context.Inventarios.Add(nuevoInventario);
+            await _context.SaveChangesAsync();
+            nuevoInventario = new Inventario(); // Reiniciar formulario
+            await CargarInventarios(); // Recargar la lista
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al agregar inventario: {ex.Message}");
+        }
+    }
+
+    private async Task EliminarInventario(int id)
+    {
+        try
+        {
+            var inventario = await _context.Inventarios.FindAsync(id);
+            if (inventario != null)
+            {
+                _context.Inventarios.Remove(inventario);
+                await _context.SaveChangesAsync();
+                await CargarInventarios(); // Recargar la lista
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al eliminar inventario: {ex.Message}");
+        }
+    }
+
+ 
+}
+}

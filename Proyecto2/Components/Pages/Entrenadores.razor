@@ -1,0 +1,113 @@
+﻿@page "/entrenadores"
+@using Microsoft.EntityFrameworkCore;
+@using Proyecto2.Models
+@using Proyecto2.Server.Data
+@inject ApplicationDbContext _context
+
+<h3>Gestión de Entrenadores</h3>
+
+<!-- Formulario para agregar entrenador -->
+<EditForm Model="nuevoEntrenador" OnValidSubmit="AgregarEntrenador">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label>Nombre:</label>
+        <InputText @bind-Value="nuevoEntrenador.Nombre" class="form-control" />
+    </div>
+
+    <div>
+        <label>Correo:</label>
+        <InputText @bind-Value="nuevoEntrenador.Correo" class="form-control" />
+    </div>
+
+    <div>
+        <label>Tipo:</label>
+        <InputText @bind-Value="nuevoEntrenador.Tipo" class="form-control" />
+    </div>
+
+    <div>
+        <label>Puntos Fuertes:</label>
+        <InputText @bind-Value="nuevoEntrenador.PuntosFuertes" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-2">Agregar Entrenador</button>
+</EditForm>
+
+<!-- Tabla para mostrar entrenadores -->
+<h4 class="mt-4">Lista de Entrenadores</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Correo</th>
+            <th>Tipo</th>
+            <th>Puntos Fuertes</th>
+            <th>Acción</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var entrenador in listaEntrenadores)
+        {
+            <tr>
+                <td>@entrenador.Id</td>
+                <td>@entrenador.Nombre</td>
+                <td>@entrenador.Correo</td>
+                <td>@entrenador.Tipo</td>
+                <td>@entrenador.PuntosFuertes</td>
+                <td>
+                    <button class="btn btn-danger" @onclick="() => EliminarEntrenador(entrenador.Id)">Eliminar</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private Entrenador nuevoEntrenador = new Entrenador();
+    private List<Entrenador> listaEntrenadores = new List<Entrenador>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarEntrenadores();
+    }
+
+    private async Task CargarEntrenadores()
+    {
+        listaEntrenadores = await _context.Entrenadores.ToListAsync();
+    }
+
+    private async Task AgregarEntrenador()
+    {
+        try
+        {
+            _context.Entrenadores.Add(nuevoEntrenador);
+            await _context.SaveChangesAsync();
+            nuevoEntrenador = new Entrenador(); // Reiniciar el formulario
+            await CargarEntrenadores(); // Recargar la lista
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al agregar entrenador: {ex.Message}");
+        }
+    }
+
+    private async Task EliminarEntrenador(int id)
+    {
+        try
+        {
+            var entrenador = await _context.Entrenadores.FindAsync(id);
+            if (entrenador != null)
+            {
+                _context.Entrenadores.Remove(entrenador);
+                await _context.SaveChangesAsync();
+                await CargarEntrenadores(); // Recargar la lista
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al eliminar entrenador: {ex.Message}");
+        }
+    }
+}

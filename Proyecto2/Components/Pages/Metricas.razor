@@ -1,0 +1,147 @@
+﻿@page "/Metricas"
+
+@using Microsoft.EntityFrameworkCore;
+@using Proyecto2.Models
+@using Proyecto2.Server.Data
+@inject ApplicationDbContext _context
+
+<!-- Formulario para agregar o editar métricas -->
+<EditForm Model="nuevaMetrica" OnValidSubmit="GuardarMetrica">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label>Nombre:</label>
+        <InputText @bind-Value="nuevaMetrica.Nombre" class="form-control" />
+    </div>
+
+    <div>
+        <label>Pecho:</label>
+        <InputNumber @bind-Value="nuevaMetrica.Pecho" class="form-control" />
+    </div>
+
+    <div>
+        <label>Espalda:</label>
+        <InputNumber @bind-Value="nuevaMetrica.Espalda" class="form-control" />
+    </div>
+
+    <div>
+        <label>Pierna:</label>
+        <InputNumber @bind-Value="nuevaMetrica.Pierna" class="form-control" />
+    </div>
+
+    <div>
+        <label>Bicep:</label>
+        <InputNumber @bind-Value="nuevaMetrica.Bicep" class="form-control" />
+    </div>
+
+    <div>
+        <label>Tricep:</label>
+        <InputNumber @bind-Value="nuevaMetrica.Tricep" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-2">@buttonText</button>
+</EditForm>
+
+<!-- Tabla para mostrar métricas -->
+<h4 class="mt-4">Lista de Métricas</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Pecho</th>
+            <th>Espalda</th>
+            <th>Pierna</th>
+            <th>Bicep</th>
+            <th>Tricep</th>
+            <th>Acción</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var metrica in listaMetricas)
+        {
+            <tr>
+                <td>@metrica.Id</td>
+                <td>@metrica.Nombre</td>
+                <td>@metrica.Pecho</td>
+                <td>@metrica.Espalda</td>
+                <td>@metrica.Pierna</td>
+                <td>@metrica.Bicep</td>
+                <td>@metrica.Tricep</td>
+                <td>
+                    <button class="btn btn-warning" @onclick="() => EditarMetrica(metrica.Id)">Editar</button>
+                    <button class="btn btn-danger" @onclick="() => EliminarMetrica(metrica.Id)">Eliminar</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private Metrica nuevaMetrica = new Metrica();
+    private List<Metrica> listaMetricas = new List<Metrica>();
+    private string buttonText = "Agregar Métrica"; // Texto del botón de acuerdo a si es agregar o editar
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarMetricas();
+    }
+
+    private async Task CargarMetricas()
+    {
+        listaMetricas = await _context.Metricas.ToListAsync();
+    }
+
+    private async Task GuardarMetrica()
+    {
+        try
+        {
+            if (nuevaMetrica.Id == 0) // Es agregar
+            {
+                _context.Metricas.Add(nuevaMetrica);
+            }
+            else // Es editar
+            {
+                _context.Metricas.Update(nuevaMetrica);
+            }
+            await _context.SaveChangesAsync();
+            nuevaMetrica = new Metrica(); // Reiniciar formulario
+            buttonText = "Agregar Métrica"; // Cambiar el texto del botón
+            await CargarMetricas(); // Recargar la lista
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al guardar métrica: {ex.Message}");
+        }
+    }
+
+    private async Task EliminarMetrica(int id)
+    {
+        try
+        {
+            var metrica = await _context.Metricas.FindAsync(id);
+            if (metrica != null)
+            {
+                _context.Metricas.Remove(metrica);
+                await _context.SaveChangesAsync();
+                await CargarMetricas(); // Recargar la lista
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al eliminar métrica: {ex.Message}");
+        }
+    }
+
+    private async Task EditarMetrica(int id)
+    {
+        // Obtener la métrica desde la base de datos
+        var metrica = await _context.Metricas.FindAsync(id);
+        if (metrica != null)
+        {
+            nuevaMetrica = metrica; // Asignar la métrica seleccionada al formulario
+            buttonText = "Actualizar Métrica"; // Cambiar el texto del botón a "Actualizar"
+        }
+    }
+}

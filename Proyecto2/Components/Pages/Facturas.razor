@@ -1,0 +1,106 @@
+﻿@page "/Facturas"
+@using Proyecto2.Models
+@using Proyecto2.Server.Data
+@using Microsoft.EntityFrameworkCore
+@inject ApplicationDbContext _context
+
+<h3>Gestión de Facturas</h3>
+
+<!-- Formulario para agregar factura -->
+<EditForm Model="nuevaFactura" OnValidSubmit="AgregarFactura">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label>Nombre:</label>
+        <InputText @bind-Value="nuevaFactura.Nombre" class="form-control" />
+    </div>
+
+    <div>
+        <label>Precio:</label>
+        <InputNumber @bind-Value="nuevaFactura.Precio" class="form-control" />
+    </div>
+
+    <div>
+        <label>Tipo:</label>
+        <InputText @bind-Value="nuevaFactura.Tipo" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-2">Agregar Factura</button>
+</EditForm>
+
+<!-- Tabla para mostrar facturas -->
+<h4 class="mt-4">Lista de Facturas</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Precio</th>
+            <th>Tipo</th>
+            <th>Acción</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var factura in listaFacturas)
+        {
+            <tr>
+                <td>@factura.Id</td>
+                <td>@factura.Nombre</td>
+                <td>@factura.Precio</td>
+                <td>@factura.Tipo</td>
+                <td>
+                    <button class="btn btn-danger" @onclick="() => EliminarFactura(factura.Id)">Eliminar</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private Factura nuevaFactura = new Factura();
+    private List<Factura> listaFacturas = new List<Factura>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarFacturas();
+    }
+
+    private async Task CargarFacturas()
+    {
+        listaFacturas = await _context.Facturas.ToListAsync();
+    }
+
+    private async Task AgregarFactura()
+    {
+        try
+        {
+            _context.Facturas.Add(nuevaFactura);
+            await _context.SaveChangesAsync();
+            nuevaFactura = new Factura(); // Reiniciar formulario
+            await CargarFacturas(); // Recargar la lista
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al agregar factura: {ex.Message}");
+        }
+    }
+
+    private async Task EliminarFactura(int id)
+    {
+        try
+        {
+            var factura = await _context.Facturas.FindAsync(id);
+            if (factura != null)
+            {
+                _context.Facturas.Remove(factura);
+                await _context.SaveChangesAsync();
+                await CargarFacturas(); // Recargar la lista
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al eliminar factura: {ex.Message}");
+        }
+    }
+}

@@ -1,0 +1,108 @@
+﻿@page "/Horarios"
+
+@using Microsoft.EntityFrameworkCore;
+@using Proyecto2.Models
+@using Proyecto2.Server.Data
+@inject ApplicationDbContext _context
+
+
+<h3>Gestión de Horarios</h3>
+
+<!-- Formulario para agregar un nuevo horario -->
+<EditForm Model="nuevoHorario" OnValidSubmit="AgregarHorario">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label>Nombre del Entrenador:</label>
+        <InputText @bind-Value="nuevoHorario.NombreEntrenador" class="form-control" />
+    </div>
+
+    <div>
+        <label>Horario de Clase:</label>
+        <InputText @bind-Value="nuevoHorario.HorarioClase" class="form-control" />
+    </div>
+
+    <div>
+        <label>Punto Fuerte:</label>
+        <InputText @bind-Value="nuevoHorario.PuntoFuerte" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-2">Agregar Horario</button>
+</EditForm>
+
+<!-- Tabla para mostrar horarios -->
+<h4 class="mt-4">Lista de Horarios</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre del Entrenador</th>
+            <th>Horario de Clase</th>
+            <th>Punto Fuerte</th>
+            <th>Acción</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var horario in listaHorarios)
+        {
+            <tr>
+                <td>@horario.Id</td>
+                <td>@horario.NombreEntrenador</td>
+                <td>@horario.HorarioClase</td>
+                <td>@horario.PuntoFuerte</td>
+                <td>
+                    <button class="btn btn-danger" @onclick="() => EliminarHorario(horario.Id)">Eliminar</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private Horario nuevoHorario = new Horario();
+    private List<Horario> listaHorarios = new List<Horario>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarHorarios();
+    }
+
+    private async Task CargarHorarios()
+    {
+        listaHorarios = await _context.Horarios.ToListAsync();
+    }
+
+    private async Task AgregarHorario()
+    {
+        try
+        {
+            _context.Horarios.Add(nuevoHorario);
+            await _context.SaveChangesAsync();
+            nuevoHorario = new Horario(); // Reiniciar formulario
+            await CargarHorarios(); // Recargar lista
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al agregar horario: {ex.Message}");
+        }
+    }
+
+    private async Task EliminarHorario(int id)
+    {
+        try
+        {
+            var horario = await _context.Horarios.FindAsync(id);
+            if (horario != null)
+            {
+                _context.Horarios.Remove(horario);
+                await _context.SaveChangesAsync();
+                await CargarHorarios(); // Recargar lista
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al eliminar horario: {ex.Message}");
+        }
+    }
+}

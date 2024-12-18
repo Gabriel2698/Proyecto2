@@ -1,11 +1,13 @@
 using Proyecto2.Components;
 using Proyecto2.Server.Data;
 using Microsoft.EntityFrameworkCore;
+using Proyecto2.Services;
 
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddSingleton<UserRoleService>();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -20,7 +22,7 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    
     app.UseHsts();
 }
 

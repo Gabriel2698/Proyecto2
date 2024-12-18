@@ -15,6 +15,34 @@
 <body>
     <Routes @rendermode="InteractiveServer" />
     <script src="_framework/blazor.web.js"></script>
+
+
+    <script>
+        window.GenerarPDF = (id, totalFacturas, fechaGeneracion) => {
+            const { jsPDF } = window.jspdf;
+
+            // Crear una nueva instancia de jsPDF
+            const doc = new jsPDF();
+
+            // Agregar contenido al PDF
+            doc.setFontSize(14);
+            doc.text("Reporte de Facturación Contable", 10, 10);
+            doc.setFontSize(12);
+            doc.text(`ID: ${id}`, 10, 20);
+            doc.text(`Total de Facturas: ${totalFacturas}`, 10, 30);
+            doc.text(`Fecha de Generación: ${fechaGeneracion}`, 10, 40);
+
+            // Generar y descargar el archivo PDF
+            doc.save("reporte_facturacion.pdf");
+        };
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="js/site.js"></script>
+
+
+
+
 </body>
 
 </html>

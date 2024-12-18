@@ -1,4 +1,8 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@using Proyecto2.Services
+@inject NavigationManager Navigation
+@inject UserRoleService UserRoleService
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">Proyecto2</a>
     </div>
@@ -15,21 +19,91 @@
         </div>
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
+            <NavLink class="nav-link" href="Login">
+                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Login
             </NavLink>
-        </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-            <NavLink class="nav-link" href="Administrador">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Administrador
-            </NavLink>
-        
-        
+            <!-- Mostrar "Metricas" y "Matriculas" solo si el rol es Cliente -->
+            @if (UserRoleService.UserRole == "Cliente")
+            {
+                <NavLink class="nav-link" href="Metricas">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Metricas
+                </NavLink>
+                <NavLink class="nav-link" href="Matriculas">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Matriculas
+                </NavLink>
+            }
+
+            <!-- Mostrar "Facturas", "BuscarMatriculas" y "Horarios" solo si el rol es Entrenador -->
+            @if (UserRoleService.UserRole == "Entrenador")
+            {
+                <NavLink class="nav-link" href="Facturas">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Facturas
+                </NavLink>
+                <NavLink class="nav-link" href="BuscarMatriculas">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Buscar Matriculas
+                </NavLink>
+                <NavLink class="nav-link" href="Horarios">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Horarios
+                </NavLink>
+            }
+
+            <!-- Mostrar todo si el rol es Admin -->
+            @if (UserRoleService.UserRole == "Admin")
+            {
+                <NavLink class="nav-link" href="Metricas">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Metricas
+                </NavLink>
+                <NavLink class="nav-link" href="Matriculas">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Matriculas
+                </NavLink>
+                <NavLink class="nav-link" href="Facturas">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Facturas
+                </NavLink>
+                <NavLink class="nav-link" href="BuscarMatriculas">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Buscar Matriculas
+                </NavLink>
+                <NavLink class="nav-link" href="Horarios">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Horarios
+                </NavLink>
+                <NavLink class="nav-link" href="Clientes">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Clientes
+                </NavLink>
+                <NavLink class="nav-link" href="Entrenadores">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Entrenadores
+                </NavLink>
+                <NavLink class="nav-link" href="Inventarios">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Inventarios
+                </NavLink>
+                <NavLink class="nav-link" href="Reportes">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Reportes
+                </NavLink>
+
+                <NavLink class="nav-link" href="ClaseFavorita">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> ClaseFavorita
+                </NavLink>
+            }
         </div>
     </nav>
 </div>
 
+@code {
+    // Accede al UserRoleService para manejar el rol
+    public string UserRole => UserRoleService.UserRole;
+
+    // Métodos para cambiar el rol
+    public void SetRoleToAdmin()
+    {
+        UserRoleService.SetUserRole("Admin");
+    }
+
+    public void SetRoleToEntrenador()
+    {
+        UserRoleService.SetUserRole("Entrenador");
+    }
+
+    public void SetRoleToCliente()
+    {
+        UserRoleService.SetUserRole("Cliente");
+    }
+}

@@ -1,0 +1,75 @@
+﻿@page "/ClaseFavorita"
+
+@using Microsoft.EntityFrameworkCore;
+@using Proyecto2.Models
+@using Proyecto2.Server.Data
+@inject ApplicationDbContext _context
+
+
+
+<h3>Clase Favorita</h3>
+
+@if (claseFavorita != null)
+{
+    <div class="alert alert-info">
+        <h4>Clase más popular:</h4>
+        <p><strong>Entrenador:</strong> @claseFavorita.NombreEntrenador</p>
+        <p><strong>Horario:</strong> @claseFavorita.HorarioClase</p>
+        <p><strong>Punto Fuerte:</strong> @claseFavorita.PuntoFuerte</p>
+        <p><strong>Matrículas:</strong> @claseFavorita.TotalMatrículas</p>
+    </div>
+}
+else
+{
+    <div class="alert alert-warning">
+        No se encontraron datos para mostrar la clase más popular.
+    </div>
+}
+
+@code {
+    private ClaseFavoritaDTO? claseFavorita;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Obtener la clase más popular basada en las matrículas
+            claseFavorita = await _context.Matriculas
+                .GroupBy(m => new { m.HorarioId, m.NombreEntrenador, m.PuntoFuerte })
+                .Select(g => new ClaseFavoritaDTO
+                    {
+                        HorarioId = g.Key.HorarioId,
+                        NombreEntrenador = g.Key.NombreEntrenador,
+                        PuntoFuerte = g.Key.PuntoFuerte,
+                        TotalMatrículas = g.Count()
+                    })
+                .OrderByDescending(c => c.TotalMatrículas)
+                .FirstOrDefaultAsync();
+
+            // Si se encontró la clase favorita, cargar el detalle del horario
+            if (claseFavorita != null)
+            {
+                var horario = await _context.Horarios
+                    .FirstOrDefaultAsync(h => h.Id == claseFavorita.HorarioId);
+
+                if (horario != null)
+                {
+                    claseFavorita.HorarioClase = horario.HorarioClase; // Asignar el horario de clase
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar la clase favorita: {ex.Message}");
+        }
+    }
+
+    public class ClaseFavoritaDTO
+    {
+        public int HorarioId { get; set; }
+        public string NombreEntrenador { get; set; } = string.Empty;
+        public string PuntoFuerte { get; set; } = string.Empty;
+        public string HorarioClase { get; set; } = string.Empty; // Para almacenar la información del horario
+        public int TotalMatrículas { get; set; }
+    }
+}

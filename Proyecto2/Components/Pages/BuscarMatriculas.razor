@@ -1,0 +1,66 @@
+﻿@page "/BuscarMatriculas"
+
+@using Microsoft.EntityFrameworkCore;
+@using Proyecto2.Models
+@using Proyecto2.Server.Data
+@inject ApplicationDbContext _context
+
+
+
+
+<h3>Buscar Matriculas por Entrenador</h3>
+
+<!-- Formulario para buscar por nombre del entrenador -->
+<div>
+    <label>Buscar Entrenador:</label>
+    <InputText @bind-Value="nombreEntrenador" class="form-control" placeholder="Ingrese nombre del entrenador" />
+    <button class="btn btn-primary mt-2" @onclick="BuscarMatriculasHandler">Buscar</button>
+</div>
+
+<!-- Tabla para mostrar las matrículas -->
+@if (matriculas != null && matriculas.Any())
+{
+    <h4 class="mt-4">Clientes Matriculados con @nombreEntrenador</h4>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Cliente ID</th>
+                <th>Nombre Entrenador</th>
+                <th>Punto Fuerte</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var matricula in matriculas)
+            {
+                <tr>
+                    <td>@matricula.ClienteId</td>
+                    <td>@matricula.NombreEntrenador</td>
+                    <td>@matricula.PuntoFuerte</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No se encontraron matrículas para el entrenador @nombreEntrenador.</p>
+}
+
+@code {
+    private string nombreEntrenador = string.Empty;
+    private List<Matricula> matriculas = new List<Matricula>();
+
+    private async Task BuscarMatriculasHandler()
+    {
+        if (!string.IsNullOrWhiteSpace(nombreEntrenador))
+        {
+            matriculas = await _context.Matriculas
+                .Where(m => m.NombreEntrenador.Contains(nombreEntrenador))
+                .ToListAsync();
+        }
+        else
+        {
+            matriculas.Clear(); // Si no hay nombre ingresado, limpiamos la lista.
+        }
+    }
+}

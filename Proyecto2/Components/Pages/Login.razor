@@ -1,0 +1,93 @@
+﻿@page "/login"
+@using Proyecto2.Components.Layout
+@using Microsoft.EntityFrameworkCore;
+@using Proyecto2.Models
+@using Proyecto2.Server.Data
+@inject NavigationManager Navigation
+@inject ApplicationDbContext _context
+
+<h3>Inicio de Sesión</h3>
+
+<EditForm Model="loginModel" OnValidSubmit="HandleLogin">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label>Nombre:</label>
+        <InputText @bind-Value="loginModel.Nombre" class="form-control" />
+    </div>
+
+    <div>
+        <label>Contraseña:</label>
+        <InputText @bind-Value="loginModel.Contraseña" class="form-control" type="password" />
+    </div>
+
+    <div>
+        <label>Rol:</label>
+        <select @bind="loginModel.Rol" class="form-control">
+            <option value="Cliente">Cliente</option>
+            <option value="Administrador">Administrador</option>
+            <option value="Entrenador">Entrenador</option>
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-2">Iniciar Sesión</button>
+</EditForm>
+
+@code {
+    private LoginModel loginModel = new LoginModel();
+
+    private async Task HandleLogin()
+    {
+        // Validar según el rol seleccionado
+        if (loginModel.Rol == "Administrador")
+        {
+            var admin = await _context.Adminis
+                .FirstOrDefaultAsync(a => a.Nombre == loginModel.Nombre && a.Contraseña == loginModel.Contraseña);
+            if (admin != null)
+            {
+                // Redirigir a la página de administración
+                Navigation.NavigateTo("/Administrador");
+            }
+            else
+            {
+                // Mostrar error de credenciales incorrectas
+            }
+        }
+        else if (loginModel.Rol == "Cliente")
+        {
+            var cliente = await _context.Clientes
+                .FirstOrDefaultAsync(c => c.Nombre == loginModel.Nombre && c.Contraseña == loginModel.Contraseña);
+            if (cliente != null)
+            {
+                // Redirigir a la página de clientes
+                Navigation.NavigateTo("/Matriculas");
+            }
+            else
+            {
+                // Mostrar error de credenciales incorrectas
+            }
+        }
+        else if (loginModel.Rol == "Entrenador")
+        {
+            var entrenador = await _context.Entrenadores
+                .FirstOrDefaultAsync(e => e.Nombre == loginModel.Nombre && e.PuntosFuertes == loginModel.Contraseña);
+            if (entrenador != null)
+            {
+                // Redirigir a la página de entrenadores
+                Navigation.NavigateTo("/Entrenadores");
+            }
+            else
+            {
+                // Mostrar error de credenciales incorrectas
+            }
+        }
+    }
+
+    public class LoginModel
+    {
+        public string Nombre { get; set; } = string.Empty;
+        public string Contraseña { get; set; } = string.Empty;
+        public string Rol { get; set; } = "Cliente"; // Por defecto Cliente
+    }
+}

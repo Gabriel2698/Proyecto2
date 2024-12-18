@@ -1,0 +1,111 @@
+﻿@page "/clientes"
+@using Proyecto2.Models
+@using Proyecto2.Server.Data
+@using Microsoft.EntityFrameworkCore
+@inject ApplicationDbContext _context
+
+<h3>Gestión de Clientes</h3>
+
+<!-- Formulario para agregar cliente -->
+<EditForm Model="nuevoCliente" OnValidSubmit="AgregarCliente">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label>Nombre:</label>
+        <InputText @bind-Value="nuevoCliente.Nombre" class="form-control" />
+    </div>
+
+    <div>
+        <label>Correo:</label>
+        <InputText @bind-Value="nuevoCliente.Correo" class="form-control" />
+    </div>
+
+    <div>
+        <label>Tipo:</label>
+        <InputText @bind-Value="nuevoCliente.Tipo" class="form-control" />
+    </div>
+
+    <div>
+        <label>Contraseña:</label>
+        <InputText @bind-Value="nuevoCliente.Contraseña" class="form-control" type="password" />
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-2">Agregar Cliente</button>
+</EditForm>
+
+<!-- Tabla para mostrar clientes -->
+<h4 class="mt-4">Lista de Clientes</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Correo</th>
+            <th>Tipo</th>
+            <th>Acción</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var cliente in listaClientes)
+        {
+            <tr>
+                <td>@cliente.Id</td>
+                <td>@cliente.Nombre</td>
+                <td>@cliente.Correo</td>
+                <td>@cliente.Tipo</td>
+                <td>
+                    <button class="btn btn-danger" @onclick="() => EliminarCliente(cliente.Id)">Eliminar</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private Cliente nuevoCliente = new Cliente();
+    private List<Cliente> listaClientes = new List<Cliente>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarClientes();
+    }
+
+    private async Task CargarClientes()
+    {
+        listaClientes = await _context.Clientes.ToListAsync();
+    }
+
+    private async Task AgregarCliente()
+    {
+        try
+        {
+            _context.Clientes.Add(nuevoCliente);
+            await _context.SaveChangesAsync();
+            nuevoCliente = new Cliente(); // Reiniciar formulario
+            await CargarClientes(); // Recargar la lista
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al agregar cliente: {ex.Message}");
+        }
+    }
+
+    private async Task EliminarCliente(int id)
+    {
+        try
+        {
+            var cliente = await _context.Clientes.FindAsync(id);
+            if (cliente != null)
+            {
+                _context.Clientes.Remove(cliente);
+                await _context.SaveChangesAsync();
+                await CargarClientes(); // Recargar la lista
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al eliminar cliente: {ex.Message}");
+        }
+    }
+}

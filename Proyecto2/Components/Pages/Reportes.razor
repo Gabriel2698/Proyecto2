@@ -1,0 +1,125 @@
+﻿@page "/Reportes"
+@using Proyecto2.Models
+@using Proyecto2.Server.Data
+@using Microsoft.EntityFrameworkCore
+@inject ApplicationDbContext _context
+@inject IJSRuntime JS
+
+
+<h3>Generar Reporte de Facturación Contable </h3>
+
+<!-- Botón para generar el reporte -->
+<button class="btn btn-primary" @onclick="GenerarReporte">Generar Reporte</button>
+
+<!-- Mostrar el total de las facturas -->
+@if (totalFacturas > 0)
+{
+    <div class="mt-4">
+        <h4>Total Facturas:</h4>
+        <p>@totalFacturas.ToString("C")</p>
+    </div>
+}
+
+<!-- Tabla de Reportes Generados -->
+<h4 class="mt-4">Reportes Generados</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Total de Facturas</th>
+            <th>Fecha de Generación</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var reporte in listaReportes)
+        {
+            <tr>
+                <td>@reporte.Id</td>
+                <td>@reporte.TotalFacturas.ToString("C")</td>
+                <td>@reporte.FechaGeneracion.ToString("dd/MM/yyyy HH:mm:ss")</td>
+
+                <td>
+                    <button class="btn btn-outline-success" @onclick="(() => export(reporte))">Generar PDF</button>
+                </td>
+
+
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+   
+
+
+
+
+@code {
+
+
+
+
+    private async Task export(Reporte reporte)
+    {
+        if (reporte != null)
+        {
+            // Llama a la función JavaScript para generar el PDF
+            await JS.InvokeVoidAsync("GenerarPDF",
+                reporte.Id,
+                reporte.TotalFacturas.ToString("C"),
+                reporte.FechaGeneracion.ToString("dd/MM/yyyy HH:mm:ss")
+            );
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+    private decimal totalFacturas = 0;
+    private List<Reporte> listaReportes = new List<Reporte>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarReportes();
+    }
+
+    private async Task CargarReportes()
+    {
+        listaReportes = await _context.Reportes.ToListAsync();
+    }
+
+    private async Task GenerarReporte()
+    {
+        try
+        {
+            // Sumar todos los precios de las facturas
+            totalFacturas = await _context.Facturas.SumAsync(f => f.Precio);
+
+            // Crear un nuevo reporte
+            var reporte = new Reporte
+                {
+                    TotalFacturas = totalFacturas,
+                    FechaGeneracion = DateTime.Now
+                };
+
+            // Guardar el reporte en la base de datos
+            _context.Reportes.Add(reporte);
+            await _context.SaveChangesAsync();
+
+            // Recargar la lista de reportes
+            await CargarReportes();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al generar el reporte: {ex.Message}");
+        }
+    }
+}
