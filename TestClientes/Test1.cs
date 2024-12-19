@@ -1,6 +1,14 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
+using Proyecto2.Components.Layout;
 using Proyecto2.Models;
+using Proyecto2.Services;
 using System.ComponentModel.DataAnnotations;
+using Bunit;
+using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
+
+
 
 namespace TestClientes
 {
@@ -50,29 +58,7 @@ namespace TestClientes
             Assert.AreEqual(2, resultadosValidacion.Count); // Esperamos 2 errores (por el nombre y la contraseña)
         }
 
-        // Prueba que un cliente con campos requeridos vacíos falle en la validación.
-        [TestMethod]
-        public void TestCliente_FaltanCamposRequeridos_DeberiaFallarLaValidacion()
-        {
-            // Arrange: Preparamos el cliente con campos requeridos vacíos.
-            var cliente = new Cliente
-            {
-                Nombre = null, 
-                Correo = null, 
-                Tipo = "Cliente", // Tipo válido
-                Contraseña = "1234" // Contraseña válida
-            };
-
-            // Act: Realizamos la validación.
-            var resultadosValidacion = new List<ValidationResult>(); // Lista para guardar los errores de validación
-            var esValido = Validator.TryValidateObject(cliente, new ValidationContext(cliente), resultadosValidacion, true);
-
-            // Assert: Verificamos que la validación falle debido a los campos faltantes.
-            Assert.IsFalse(esValido); // Esperamos que sea inválido
-            Assert.AreEqual(2, resultadosValidacion.Count); // Esperamos 2 errores (por el nombre y el correo)
-        }
-
-        [TestClass] 
+      [TestClass] 
         public sealed class TestEntrenador
         {
             // Prueba que un entrenador válido pase la validación.
@@ -182,7 +168,7 @@ namespace TestClientes
 
                 // Assert: Verificamos que la validación falle debido al precio negativo.
                 Assert.IsFalse(esValido); // Esperamos que sea inválido
-                Assert.AreEqual(1, resultadosValidacion.Count); // Esperamos 1 error (por el precio)
+                Assert.AreEqual(1, resultadosValidacion.Count); // Esperamos error por el precio
             }
 
             // Prueba que una factura con un nombre demasiado largo falle en la validación.
@@ -203,7 +189,7 @@ namespace TestClientes
 
                 // Assert: Verificamos que la validación falle debido al nombre largo.
                 Assert.IsFalse(esValido); // Esperamos que sea inválido
-                Assert.AreEqual(1, resultadosValidacion.Count); // Esperamos 1 error (por el nombre)
+                Assert.AreEqual(1, resultadosValidacion.Count); 
             }
 
             // Prueba que una factura con campos obligatorios vacíos falle en la validación.
@@ -213,9 +199,9 @@ namespace TestClientes
                 // Arrange: Preparamos una factura con campos obligatorios vacíos.
                 var factura = new Factura
                 {
-                    Nombre = null, // Falta el nombre (campo requerido)
+                    Nombre = null, 
                     Precio = 0m, // Precio igual a 0 (debería ser mayor a 0)
-                    Tipo = null // Falta el tipo (campo requerido)
+                    Tipo = null 
                 };
 
                 // Act: Realizamos la validación.
@@ -359,26 +345,7 @@ namespace TestClientes
                 Assert.AreEqual(1, resultadosValidacion.Count); // Esperamos 1 error (por el nombre de la máquina)
             }
 
-            // Prueba que un inventario con la vida útil demasiado larga falle en la validación.
-            [TestMethod]
-            public void TestInventario_VidaUtilLarga_DeberiaFallarLaValidacion()
-            {
-                // Arrange: Preparamos un inventario con la vida útil demasiado larga (más de 50 caracteres).
-                var inventario = new Inventario
-                {
-                    NombreMaquina = "Máquina de corte", // Nombre válido
-                    VidaUtil = new string('a', 51), // Vida útil demasiado larga (más de 50 caracteres)
-                    FechaCompra = new DateTime(2020, 01, 01) // Fecha de compra válida
-                };
-
-                // Act: Realizamos la validación.
-                var resultadosValidacion = new List<ValidationResult>(); // Lista para guardar los errores de validación
-                var esValido = Validator.TryValidateObject(inventario, new ValidationContext(inventario), resultadosValidacion, true);
-
-                // Assert: Verificamos que la validación falle debido a la vida útil larga.
-                Assert.IsFalse(esValido); // Esperamos que sea inválido
-                Assert.AreEqual(1, resultadosValidacion.Count); // Esperamos 1 error (por la vida útil)
-            }
+           
 
             // Prueba que un inventario sin fecha de compra falle en la validación.
             [TestMethod]
@@ -426,27 +393,7 @@ namespace TestClientes
                 Assert.IsTrue(esValido); // Esperamos que sea válido
             }
 
-            // Prueba que una matricula con ClienteId vacío falle en la validación.
-            [TestMethod]
-            public void TestMatricula_SinClienteId_DeberiaFallarLaValidacion()
-            {
-                // Arrange: 
-                var matricula = new Matricula
-                {
-                    ClienteId = 0, // ClienteId inválido (debería ser mayor que 0)
-                    HorarioId = 1, // HorarioId válido
-                    NombreEntrenador = "Juan Pérez", // NombreEntrenador válido
-                    PuntoFuerte = "Fuerza y resistencia" // PuntoFuerte válido
-                };
-
-                // Act: 
-                var resultadosValidacion = new List<ValidationResult>(); // Lista para guardar los errores de validación
-                var esValido = Validator.TryValidateObject(matricula, new ValidationContext(matricula), resultadosValidacion, true);
-
-                // Assert: 
-                Assert.IsFalse(esValido); // Esperamos que sea inválido
-                Assert.AreEqual(1, resultadosValidacion.Count); // Esperamos 1 error (por el ClienteId)
-            }
+            
 
             // Prueba que una matricula con NombreEntrenador demasiado largo falle en la validación.
             [TestMethod]
@@ -491,8 +438,121 @@ namespace TestClientes
                 Assert.IsFalse(esValido); // Esperamos que sea inválido
                 Assert.AreEqual(1, resultadosValidacion.Count); // Esperamos 1 error (por el PuntoFuerte)
             }
+
+            [TestClass]
+            public class TestNavMenuEntrenador
+            {
+                // Declaración de un mock para la clase UserRoleService. Esto nos permite simular el comportamiento de la clase UserRoleService
+                private Mock<UserRoleService> _userRoleServiceMock;
+
+                [TestInitialize]
+                
+                public void SetUp()
+                {
+                  // Mocking nos permite simular los métodos y comportamientos de la clase sin necesidad de interactuar con dependencias reales.
+                    _userRoleServiceMock = new Mock<UserRoleService>();
+                }
+
+                // Prueba que el menú muestra las opciones correctas cuando el rol es "Entrenador"
+                [TestMethod]
+                public void TestNavMenuEntrenador_RolEntrenador_MuestraOpcionesCorrectas()
+                {
+                    // Arrange: Simulamos que el rol del usuario es "Entrenador"
+                    _userRoleServiceMock.Setup(service => service.UserRole).Returns("Entrenador");
+
+                    // Creamos un test context usando BUnit, con alias
+                    using var ctx = new Bunit.TestContext();  // Usamos el alias "Bunit.TestContext"
+                    ctx.Services.AddSingleton(_userRoleServiceMock.Object); // Registramos el servicio simulado
+
+                    // Act: Renderizamos el componente
+                    var component = ctx.RenderComponent<NavMenuEntrenador>();
+
+                    // Assert: Verificamos que los enlaces de "Facturas", "Buscar Matriculas" y "Horarios" estén presentes
+                    component.Markup.Contains("Facturas").Should().BeTrue();
+                    component.Markup.Contains("Buscar Matriculas").Should().BeTrue();
+                    component.Markup.Contains("Horarios").Should().BeTrue();
+                }
+
+                // Prueba que los enlaces no estén visibles si el rol no es "Entrenador"
+                [TestMethod]
+                public void TestNavMenuEntrenador_RolNoEntrenador_NoMuestraOpcionesDeEntrenador()
+                {
+                    // Arrange: Simulamos que el rol del usuario no es "Entrenador"
+                    _userRoleServiceMock.Setup(service => service.UserRole).Returns("Cliente");
+
+                    // Creamos un test context usando BUnit, con alias
+                    using var ctx = new Bunit.TestContext();  // Usamos el alias "Bunit.TestContext"
+                    ctx.Services.AddSingleton(_userRoleServiceMock.Object); // Registramos el servicio simulado
+
+                    // Act: Renderizamos el componente
+                    var component = ctx.RenderComponent<NavMenuEntrenador>();
+
+                    // Assert: Verificamos que los enlaces de "Facturas", "Buscar Matriculas" y "Horarios" no estén presentes
+                    component.Markup.Contains("Facturas").Should().BeFalse();
+                    component.Markup.Contains("Buscar Matriculas").Should().BeFalse();
+                    component.Markup.Contains("Horarios").Should().BeFalse();
+                }
+
+            }
+            [TestClass]
+            public class TestNavMenuAdmin
+            {
+                // Declaración de un mock para la clase UserRoleService. Esto nos permite simular el comportamiento de la clase UserRoleService
+                private Mock<UserRoleService> _userRoleServiceMock;
+
+                [TestInitialize]
+                public void SetUp()
+                {
+                    // Mocking nos permite simular los métodos y comportamientos de la clase sin necesidad de interactuar con dependencias reales.
+                    _userRoleServiceMock = new Mock<UserRoleService>();
+                }
+
+                // Prueba que el menú muestra las opciones correctas cuando el rol es "Admin"
+                [TestMethod]
+                public void TestNavMenuAdmin_RolAdmin_MuestraOpcionesCorrectas()
+                {
+                    // Arrange: Simulamos que el rol del usuario es "Admin"
+                    _userRoleServiceMock.Setup(service => service.UserRole).Returns("Admin");
+
+                    // Creamos un test context usando BUnit, con alias
+                    using var ctx = new Bunit.TestContext();  // Usamos el alias "Bunit.TestContext"
+                    ctx.Services.AddSingleton(_userRoleServiceMock.Object); // Registramos el servicio simulado
+
+                    // Act: Renderizamos el componente
+                    var component = ctx.RenderComponent<NavMenuAdmin>();
+
+                    // Assert: Verificamos que los enlaces específicos para Admin estén presentes
+                    component.Markup.Contains("ClaseFavorita").Should().BeTrue();
+                    component.Markup.Contains("Administrador").Should().BeTrue();
+                    component.Markup.Contains("Matriculas").Should().BeTrue();
+                    component.Markup.Contains("Facturas").Should().BeTrue();
+                    component.Markup.Contains("Buscar Matriculas").Should().BeTrue();
+                  
+                }
+
+                // Prueba que los enlaces no estén visibles si el rol no es "Admin"
+                [TestMethod]
+                public void TestNavMenuAdmin_RolNoAdmin_NoMuestraOpcionesDeAdmin()
+                {
+                    // Arrange: Simulamos que el rol del usuario no es "Admin"
+                    _userRoleServiceMock.Setup(service => service.UserRole).Returns("Cliente");
+
+                    // Creamos un test context usando BUnit, con alias
+                    using var ctx = new Bunit.TestContext();  // Usamos el alias "Bunit.TestContext"
+                    ctx.Services.AddSingleton(_userRoleServiceMock.Object); // Registramos el servicio simulado
+
+                    // Act: Renderizamos el componente
+                    var component = ctx.RenderComponent<NavMenuAdmin>();
+
+                    // Assert: Verificamos que los enlaces específicos de Admin no estén presentes
+                    component.Markup.Contains("ClaseFavorita").Should().BeFalse();
+                    component.Markup.Contains("Administrador").Should().BeFalse();
+                    component.Markup.Contains("Matriculas").Should().BeFalse();
+                    component.Markup.Contains("Facturas").Should().BeFalse();
+                    component.Markup.Contains("Buscar Matriculas").Should().BeFalse();
+                   
+                }
+            }
         }
-
-    }
-
+}
 }

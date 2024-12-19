@@ -7,6 +7,7 @@ using Proyecto2.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddScoped<UserRoleService>();
 builder.Services.AddSingleton<UserRoleService>();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
